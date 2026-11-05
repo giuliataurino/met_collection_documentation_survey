@@ -495,45 +495,69 @@ function buildMenus() {
 document.addEventListener('click', e => { document.querySelectorAll('details.pop[open]').forEach(d => { if (!d.contains(e.target)) d.removeAttribute('open'); }); });
 
 // ---- value search across every indexed value -------------------------------------------
-const VALUE_INDEX = [];   // {kind, field, value, lc, total, split}
+// DATA.field_values: {field: {complete, min_count, n_values, values: [[value, total, [[deptIdx, n], …]]]}}
+// (produced by the survey). Artist / title / classification tables and the per-field common
+// values are merged in, so the search works on partial builds too.
+const VALUE_INDEX = [];   // {field, value, lc, total, split:[[di,n]], partial}
+const FIELD_COVERAGE = {}; // field -> {complete, min_count, n_values, partial}
+const VDEPTS = DATA.depts || (DATA.artist_counts && DATA.artist_counts.depts) || DATA.departments.map(d => d.name);
 (function buildValueIndex() {
-  const add = (kind, field, value, total, split) => VALUE_INDEX.push({ kind, field, value, lc: value.toLowerCase(), total, split });
-  if (HAS_ART) DATA.artists.forEach(a => add('artist', 'artistDisplayName', a.name, a.objects, a.depts));
-  if (HAS_ART_COUNTS) { const seen = new Set(HAS_ART ? DATA.artists.map(a => a.name) : []); DATA.artist_counts.artists.forEach(([n, sp]) => { if (!seen.has(n)) add('artist', 'artistDisplayName', n, sp.reduce((t, [, c]) => t + c, 0), sp.map(([di, c]) => `${DATA.artist_counts.depts[di]} (${fmt(c)})`).join('; ')); }); }
-  if (HAS_TITLES) DATA.title_counts.titles.forEach(([n, sp]) => add('title', 'title', n, sp.reduce((t, [, c]) => t + c, 0), sp.map(([di, c]) => `${DATA.title_counts.depts[di]} (${fmt(c)})`).join('; ')));
-  DATA.classifications.forEach(c => add('class', 'classification', c.name, c.objects, c.depts || ''));
-  Object.entries(DATA.common_values || {}).forEach(([f, vals]) => vals.forEach(([v, n]) => add('field', f, v, n, 'one of the most common values of this field')));
+  const have = new Set();
+  const add = (field, value, total, split, partial) => VALUE_INDEX.push({ field, value, lc: value.toLowerCase(), total, split: split || [], partial });
+  Object.entries(DATA.field_values || {}).forEach(([f, t]) => { have.add(f); FIELD_COVERAGE[f] = { complete: t.complete, min_count: t.min_count, n_values: t.n_values }; t.values.forEach(([v, n, sp]) => add(f, v, n, sp, false)); });
+  if (!have.has('artistDisplayName')) {
+    if (HAS_ART) DATA.artists.forEach(a => add('artistDisplayName', a.name, a.objects, null, false));
+    if (HAS_ART_COUNTS) { const seen = new Set(HAS_ART ? DATA.artists.map(a => a.name) : []); DATA.artist_counts.artists.forEach(([n, sp]) => { if (!seen.has(n)) add('artistDisplayName', n, sp.reduce((t, [, c]) => t + c, 0), sp, false); }); FIELD_COVERAGE.artistDisplayName = { complete: true, min_count: 1, n_values: DATA.artist_counts.n_names }; }
+  }
+  if (!have.has('title') && HAS_TITLES) { DATA.title_counts.titles.forEach(([n, sp]) => add('title', n, sp.reduce((t, [, c]) => t + c, 0), sp, false)); FIELD_COVERAGE.title = { complete: false, min_count: DATA.title_counts.min_count || 25, n_values: DATA.title_counts.n_names }; }
+  if (!have.has('classification')) { DATA.classifications.forEach(c => add('classification', c.name, c.objects, null, false)); FIELD_COVERAGE.classification = { complete: true, min_count: 1, n_values: DATA.classifications.length }; }
+  Object.entries(DATA.common_values || {}).forEach(([f, vals]) => { if (have.has(f)) return; FIELD_COVERAGE[f] = { complete: false, partial: true, min_count: null, n_values: null }; vals.forEach(([v, n]) => add(f, v, n, null, true)); });
 })();
-const KIND_LABEL = { artist: 'Artists', title: 'Titles', class: 'Classifications', field: 'Common values of other fields' };
+const ROW_FIELD = { artistDisplayName: 'artist', title: 'title', classification: 'class' };
+function coverageNote(f) {
+  const c = FIELD_COVERAGE[f]; if (!c) return '';
+  if (c.partial) return 'only the most common values are indexed in this build';
+  if (c.complete) return `all ${fmt(c.n_values)} values indexed`;
+  return `values with ≥${c.min_count} objects indexed (${fmt(c.n_values)} distinct)`;
+}
 function valueSearch(q) {
   q = q.trim().toLowerCase(); const panel = $('vsPanel');
   if (q.length < 2) { panel.style.display = 'none'; return; }
-  const groups = { artist: [], title: [], class: [], field: [] };
-  for (const e of VALUE_INDEX) if (e.lc.includes(q)) groups[e.kind].push(e);
-  let html = '', any = false;
-  for (const k of ['artist', 'title', 'class', 'field']) {
-    const g = groups[k]; if (!g.length) continue; any = true;
-    g.sort((a, b) => (a.lc.startsWith(q) ? 0 : 1) - (b.lc.startsWith(q) ? 0 : 1) || b.total - a.total);
-    html += `<div class="vg">${KIND_LABEL[k]} · ${fmt(g.length)}</div>` + g.slice(0, 25).map(e =>
-      `<button class="vr" data-k="${e.kind}" data-f="${e.field}" data-v="${e.value.replace(/"/g, '&quot;')}" title="${e.split.replace(/"/g, '&quot;')}"><span class="f">${e.kind === 'field' ? e.field : ''}</span><span class="v">${e.value}</span><span class="n">${fmt(e.total)} obj.</span></button>`).join('')
-      + (g.length > 25 ? `<div class="more">${fmt(g.length - 25)} more — keep typing to narrow</div>` : '');
+  const groups = {};
+  for (const e of VALUE_INDEX) if (e.lc.includes(q)) (groups[e.field] = groups[e.field] || []).push(e);
+  const order = Object.keys(groups).sort((a, b) => (ROW_FIELD[a] ? 0 : 1) - (ROW_FIELD[b] ? 0 : 1) || groups[b].reduce((t, e) => t + e.total, 0) - groups[a].reduce((t, e) => t + e.total, 0));
+  let html = '';
+  for (const f of order) {
+    const g = groups[f]; g.sort((a, b) => (a.lc.startsWith(q) ? 0 : 1) - (b.lc.startsWith(q) ? 0 : 1) || b.total - a.total);
+    const objs = g.reduce((t, e) => t + e.total, 0);
+    html += `<div class="vg">${f} · ${fmt(g.length)} value${g.length > 1 ? 's' : ''}, ${fmt(objs)} objects <span style="font-weight:400;text-transform:none;letter-spacing:0">· ${coverageNote(f)}</span></div>`
+      + g.slice(0, 20).map((e, i) => `<button class="vr" data-i="${VALUE_INDEX.indexOf(e)}" title="${e.split.length ? e.split.map(([di, n]) => `${VDEPTS[di]} (${fmt(n)})`).join('; ').replace(/"/g, '&quot;') : ''}"><span class="v">${e.value}</span><span class="n">${fmt(e.total)} obj.</span></button>`).join('')
+      + (g.length > 20 ? `<div class="more">${fmt(g.length - 20)} more in ${f} — keep typing to narrow</div>` : '');
   }
-  if (!any) { const n = DATA.title_counts ? ` (titles with fewer than ${DATA.title_counts.min_count || 25} objects are not indexed)` : ''; html = `<div class="more">no value contains “${q}”${n}</div>`; }
+  if (!order.length) html = `<div class="more">no indexed value contains “${q}”. ${Object.values(FIELD_COVERAGE).some(c => c.partial) ? 'Most fields in this build are indexed by their common values only; re-run the survey for every value of every field.' : ''}</div>`;
   panel.innerHTML = html; panel.style.display = 'block';
 }
 $('vsearch').oninput = e => valueSearch(e.target.value);
 $('vsearch').onfocus = e => valueSearch(e.target.value);
-$('vsPanel').onclick = e => {
-  const btn = e.target.closest('button.vr'); if (!btn) return;
-  const k = btn.dataset.k, v = btn.dataset.v;
+function showValueCard(e) {
+  // a value of a field that has no row view: show the field's column and the value's department split
+  const cov = FIELD_COVERAGE[e.field] || {};
+  const split = e.split.length ? e.split.map(([di, n]) => `${VDEPTS[di]} ${fmt(n)}`).join(' · ') : (cov.partial ? 'department split not available in this build' : '');
+  $('hint').insertAdjacentHTML('afterend', `<p class="notice" id="vcard" style="display:block"><b>${e.field} = “${e.value}”</b> — ${fmt(e.total)} objects${split ? ': ' + split : ''}. The column shown is the field’s fill rate per department; the value itself cannot be broken down by other fields in this survey.</p>`);
+}
+$('vsPanel').onclick = ev => {
+  const btn = ev.target.closest('button.vr'); if (!btn) return;
+  const e = VALUE_INDEX[+btn.dataset.i];
   $('vsPanel').style.display = 'none';
-  if (k === 'field') { state.findRow = ''; $('findRow').value = ''; state.find = btn.dataset.f.toLowerCase(); $('find').value = btn.dataset.f; if (state.rows !== 'dept') setRows('dept'); else render(); return; }
-  state.find = ''; $('find').value = '';
-  state.findRow = v.toLowerCase(); $('findRow').value = v;
-  setRows(k === 'class' ? 'class' : k);
+  const old = $('vcard'); if (old) old.remove();
+  const rowKind = ROW_FIELD[e.field];
+  if (rowKind) { state.find = ''; $('find').value = ''; state.findRow = e.value.toLowerCase(); $('findRow').value = e.value; setRows(rowKind); return; }
+  state.findRow = ''; $('findRow').value = ''; state.find = e.field.toLowerCase(); $('find').value = e.field;
+  if (state.rows !== 'dept') setRows('dept'); else render();
+  showValueCard(e);
 };
-document.addEventListener('click', e => { if (!e.target.closest('.vs')) $('vsPanel').style.display = 'none'; });
-$('vsearch').addEventListener('keydown', e => { if (e.key === 'Escape') $('vsPanel').style.display = 'none'; if (e.key === 'Enter') { const b = $('vsPanel').querySelector('button.vr'); if (b) b.click(); } });
+document.addEventListener('click', ev => { if (!ev.target.closest('.vs')) $('vsPanel').style.display = 'none'; });
+$('vsearch').addEventListener('keydown', ev => { if (ev.key === 'Escape') $('vsPanel').style.display = 'none'; if (ev.key === 'Enter') { const b = $('vsPanel').querySelector('button.vr'); if (b) b.click(); } });
 
 // controls
 $('rowsDept').onclick = () => setRows('dept'); $('rowsClass').onclick = () => setRows('class'); $('rowsArtist').onclick = () => setRows('artist'); $('rowsTitle').onclick = () => setRows('title');
@@ -553,7 +577,7 @@ $('size').oninput = e => { document.documentElement.style.setProperty('--cell', 
 $('labels').onchange = e => { state.labels = e.target.checked; render(); };
 $('flagsOn').onchange = e => { state.flags = e.target.checked; document.body.classList.toggle('noflags', !state.flags); render(); };
 $('exclBlank').onchange = e => { state.exclBlank = e.target.checked; render(); };
-$('reset').onclick = () => { state = defaults(); $('metric').value = 'fill'; $('scope').value = 'all'; $('sortF').value = 'group'; $('sortR').value = 'mean'; $('find').value = ''; $('findRow').value = ''; $('vsearch').value = ''; $('vsPanel').style.display = 'none'; $('labels').checked = false; $('flagsOn').checked = true; $('exclBlank').checked = false; document.body.classList.remove('noflags'); $('size').value = 22; document.documentElement.style.setProperty('--cell', '22px'); buildMenus(); setRows('dept'); };
+$('reset').onclick = () => { state = defaults(); $('metric').value = 'fill'; $('scope').value = 'all'; $('sortF').value = 'group'; $('sortR').value = 'mean'; $('find').value = ''; $('findRow').value = ''; $('vsearch').value = ''; $('vsPanel').style.display = 'none'; { const old = $('vcard'); if (old) old.remove(); } $('labels').checked = false; $('flagsOn').checked = true; $('exclBlank').checked = false; document.body.classList.remove('noflags'); $('size').value = 22; document.documentElement.style.setProperty('--cell', '22px'); buildMenus(); setRows('dept'); };
 
 // feature availability
 if (!HAS_FLAGS) { $('flagsOn').disabled = true; $('exclBlank').disabled = true; $('flagLegend').style.display = 'none'; }
@@ -566,7 +590,7 @@ if (!HAS_LEN) { $('metric').disabled = true; $('metric').title = 'Entry-length s
 const nPub = F.filter(f => !f.private).length, nPriv = F.length - nPub;
 const dAll = DATA.departments; const overallFill = dAll.reduce((s, d) => s + d.mean * d.objects, 0) / DATA.total;
 $('stats').innerHTML = [[fmt(DATA.total), 'objects surveyed'], [dAll.length, 'curatorial departments'], [F.length, 'metadata fields scored'], [`${nPub} + ${nPriv}`, 'public-API fields + private-only fields'], [pct(overallFill), 'object-weighted mean fill'], HAS_ART ? [fmt(DATA.n_artists_total || DATA.artists.length), 'named artists'] : HAS_ART_COUNTS ? [fmt(DATA.artist_counts.n_names), 'distinct artist names'] : null].filter(Boolean).map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
-$('method').textContent = `A field counts as filled when the object carries an informative value: nulls, empty strings and lists, numeric zeros in date fields, placeholder strings such as “unknown” or “n/a”, and keys absent from the record all count as unfilled. Identifiers, flags and housekeeping columns (objectID, department, metadataDate, on-view state, collection membership and the like) are left out of the scoring. Fields marked “private” exist only in the Hasura schema and are not part of the public Collection API contract, so their fill rates describe internal cataloguing rather than what the public can see. Entry length is measured in characters for text fields and in items for list fields (tags, constituents, images); an entry is “thin” when it is 30 characters or fewer, or a single item. The length metric colours each cell by its mean entry length relative to the collection-wide mean for that field, so a short field such as culture and a long one such as provenance are each judged on their own scale. Artists are grouped by display name (artistDisplayName) and assigned to the department holding most of their objects; the department filter applies to artists, titles and classifications through that department. Where the artist-level survey has not been run, an artist’s or a title’s row is an estimate: each field shows the object-weighted average of the fill rates of the departments holding that artist’s objects, which answers “how documented is the pool these objects sit in”, not “how many of these objects have the field”; rows and counts marked ≈ are such estimates. The value search looks through every indexed value: all artist names, titles carried by at least two objects, all classifications, and the most common values of every other field; picking a result opens the matching row. Records were pulled from objects_crd with the apiObject relationship; public-API field names follow the private-API guide’s field comparison table. Flags come from one page of the Met's internal Collection Online documentation, the cell-by-cell check of Collection Information's CRD Tombstone workbook (29 October 2026): a hatched cell is a field the nightly import blanks for that department, so its emptiness is a publishing decision rather than a cataloguing gap; the marker above a field name carries the workbook audit's verdict for that field in at least one department, red where the workbook's description is wrong, amber where it is outdated, grey where it is incomplete, and the tooltip shows what the workbook says against what is true today for the department under the cursor. Fields the workbook does not describe carry no flag. Row means are unweighted across the fields shown; with “exclude blanked cells from means” on, hatched cells are left out so departments are judged only on fields the pipeline lets them have.${DATA.generated ? ` Survey run: ${DATA.generated}.` : ''}`;
+$('method').textContent = `A field counts as filled when the object carries an informative value: nulls, empty strings and lists, numeric zeros in date fields, placeholder strings such as “unknown” or “n/a”, and keys absent from the record all count as unfilled. Identifiers, flags and housekeeping columns (objectID, department, metadataDate, on-view state, collection membership and the like) are left out of the scoring. Fields marked “private” exist only in the Hasura schema and are not part of the public Collection API contract, so their fill rates describe internal cataloguing rather than what the public can see. Entry length is measured in characters for text fields and in items for list fields (tags, constituents, images); an entry is “thin” when it is 30 characters or fewer, or a single item. The length metric colours each cell by its mean entry length relative to the collection-wide mean for that field, so a short field such as culture and a long one such as provenance are each judged on their own scale. Artists are grouped by display name (artistDisplayName) and assigned to the department holding most of their objects; the department filter applies to artists, titles and classifications through that department. Where the artist-level survey has not been run, an artist’s or a title’s row is an estimate: each field shows the object-weighted average of the fill rates of the departments holding that artist’s objects, which answers “how documented is the pool these objects sit in”, not “how many of these objects have the field”; rows and counts marked ≈ are such estimates. The value search looks through every indexed value of every text field (all values for most fields; for very high-cardinality fields such as title, the values carried by at least two objects), grouped by field; picking an artist, title or classification opens its row, picking any other value shows that field’s column and the value’s department split. Records were pulled from objects_crd with the apiObject relationship; public-API field names follow the private-API guide’s field comparison table. Flags come from one page of the Met's internal Collection Online documentation, the cell-by-cell check of Collection Information's CRD Tombstone workbook (29 October 2026): a hatched cell is a field the nightly import blanks for that department, so its emptiness is a publishing decision rather than a cataloguing gap; the marker above a field name carries the workbook audit's verdict for that field in at least one department, red where the workbook's description is wrong, amber where it is outdated, grey where it is incomplete, and the tooltip shows what the workbook says against what is true today for the department under the cursor. Fields the workbook does not describe carry no flag. Row means are unweighted across the fields shown; with “exclude blanked cells from means” on, hatched cells are left out so departments are judged only on fields the pipeline lets them have.${DATA.generated ? ` Survey run: ${DATA.generated}.` : ''}`;
 buildMenus();
 setRows('dept');
 </script>
