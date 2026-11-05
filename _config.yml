@@ -1,0 +1,12 @@
+# GitHub Pages (Jekyll) configuration.
+# Only the heatmap and its data need to be published. Everything else is
+# source material or build tooling, so it is left out of the deployed site
+# to keep the Pages artifact small.
+exclude:
+  - collection-online.html
+  - heatmap_template.html
+  - build_field_flags.py
+  - field_flags.csv
+  - field_flags.json
+  - README.md
+  - LICENSE
