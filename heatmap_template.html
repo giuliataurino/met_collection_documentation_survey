@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Met collection — metadata fill by department and field</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --grey900:#222222;--grey800:#484848;--grey700:#6d6d6d;--grey600:#a0a0a0;--grey400:#b8b8b8;--grey300:#d6d6d6;--grey200:#e5e5e5;--grey100:#f4f4f4;--grey050:#fbfbfb;
+  --metRed:#e4002b;--metRedMedium:#a6192e;--metRedDark:#6e182e;--red600:#f4c3cc;
+  --blueBright:#0050bc;--blue100:#001e50;--blue600:#c8d8eb;--blue900:#99b9e4;
+  --bg:#ffffff;--surface:var(--grey100);--text:var(--grey700);--textHeader:var(--grey900);--divider:var(--grey200);--border:var(--grey400);--borderActive:var(--grey700);--na:#e9e9e9;
+  --cell:22px;--radius:4px;
+  --ui:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"The Met Serif",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#161616;--surface:#222;--text:#c9c9c9;--textHeader:#f4f4f4;--divider:#333;--border:#555;--borderActive:#aaa;--grey050:#1c1c1c;--grey100:#222;--grey200:#333;--na:#2c2c2c}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#161616;--surface:#222;--text:#c9c9c9;--textHeader:#f4f4f4;--divider:#333;--border:#555;--borderActive:#aaa;--grey050:#1c1c1c;--grey100:#222;--grey200:#333;--na:#2c2c2c}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:14px;line-height:1.5}
+a{color:var(--textHeader)}
+header{padding:40px clamp(16px,4vw,56px) 24px;border-bottom:1px solid var(--divider)}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,3.4vw,44px);line-height:1.12;color:var(--textHeader);margin:0 0 12px;max-width:26em}
+.lede{max-width:66ch;margin:0 0 20px;font-size:15px}
+.stats{display:flex;flex-wrap:wrap;gap:28px 40px}
+.stat b{display:block;font-size:26px;font-weight:600;color:var(--textHeader);line-height:1.1}
+.stat span{font-size:13px}
+.legend{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:13px;flex-wrap:wrap}
+.legend .bar{width:220px;height:12px;border-radius:2px;border:1px solid var(--divider);background:linear-gradient(90deg,#6e182e,#e4002b 28%,#f4c3cc 50%,#c8d8eb 60%,#0050bc 85%,#001e50)}
+.legend .na{display:inline-block;width:12px;height:12px;background:var(--na);border:1px solid var(--divider);vertical-align:middle;margin:0 4px 0 14px}
+main{padding:0 clamp(16px,4vw,56px) 56px}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:14px 0 10px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;border-bottom:1px solid var(--divider)}
+.controls label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text)}
+select,input[type=search]{font:inherit;font-size:13px;color:var(--textHeader);background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;min-height:32px}
+select:disabled{opacity:.45}
+select:focus-visible,input:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--blueBright);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;background:var(--bg);color:var(--textHeader);border:0;cursor:pointer;min-height:32px}
+.seg button[aria-pressed="true"]{background:var(--textHeader);color:var(--bg)}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+button.link{font:inherit;font-size:13px;background:none;border:0;color:var(--textHeader);text-decoration:underline;cursor:pointer;padding:4px 0}
+input[type=range]{width:110px;accent-color:var(--grey900)}
+details.pop{position:relative}
+details.pop summary{list-style:none;cursor:pointer;font-size:13px;color:var(--textHeader);background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;min-height:32px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+details.pop summary::-webkit-details-marker{display:none}
+details.pop summary::after{content:"▾";font-size:11px;color:var(--grey700)}
+details.pop[open] summary{border-color:var(--borderActive)}
+details.pop .menu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.14);padding:10px 12px;min-width:260px;max-height:360px;overflow:auto}
+details.pop .menu .quick{display:flex;gap:12px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--divider)}
+details.pop .menu label{display:flex;gap:8px;align-items:center;padding:3px 0;white-space:nowrap;color:var(--textHeader)}
+details.pop .menu label small{color:var(--grey600);font-size:11px;margin-left:auto;padding-left:12px}
+details.pop .menu label.priv{color:var(--grey700);font-style:italic}
+details.pop .menu .gh{font-size:11px;font-weight:600;color:var(--grey700);margin:8px 0 2px;text-transform:uppercase;letter-spacing:.02em}
+details.pop .menu .gh:first-of-type{margin-top:0}
+details.pop .menu input[type=search]{width:100%;margin-bottom:8px}
+details.pop .menu.wide{min-width:320px;max-height:440px}
+.hint{font-size:12px;color:var(--grey600);margin:10px 0 0}
+.hint b{color:var(--textHeader);font-weight:600}
+.wrap{overflow:auto;max-height:calc(100vh - 150px);border:1px solid var(--divider);margin-top:14px;background:var(--bg)}
+table{border-collapse:separate;border-spacing:0;font-size:12px}
+th,td{padding:0}
+thead th{position:sticky;top:0;z-index:3;background:var(--bg)}
+thead th.corner{left:0;z-index:4}
+th.col{vertical-align:bottom;height:168px;width:var(--cell);min-width:var(--cell);cursor:pointer;font-weight:400;color:var(--textHeader);border-bottom:1px solid var(--border)}
+th.col .rot{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;display:block;height:140px;line-height:var(--cell);padding:6px 0 0;text-align:left;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+th.col.sorted .rot,tbody th.sorted{font-weight:600}
+th.col.private .rot{color:var(--grey700);font-style:italic}
+th.col .fl{display:block;width:8px;height:8px;border-radius:2px;margin:3px auto 2px;background:transparent}
+th.col .fl.high{background:var(--metRed)}th.col .fl.medium{background:#d98e04}th.col .fl.low{background:var(--grey600)}
+body.noflags th.col .fl{visibility:hidden}
+td.c.hatch{background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.62) 0 2px,transparent 2px 6px)}
+body.noflags td.c.hatch{background-image:none}
+.legend .sw{display:inline-block;width:12px;height:12px;vertical-align:middle;margin:0 4px 0 14px;border:1px solid var(--divider)}
+.legend .sw.h{background:var(--blueBright);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.62) 0 2px,transparent 2px 6px)}
+.legend .sw.f1{background:var(--metRed);border-radius:2px}.legend .sw.f2{background:#d98e04;border-radius:2px}.legend .sw.f3{background:var(--grey600);border-radius:2px}
+#tip .flags{margin-top:8px;padding-top:6px;border-top:1px solid rgba(255,255,255,.25)}
+#tip .flags div{margin:3px 0}#tip .flags code{font-family:inherit;font-weight:600}
+#tip .flags .st{opacity:.75;font-size:11px}
+.panel li .rule{color:var(--grey600);font-size:11px}
+th.gstart,td.gstart,th.row.gstart{border-left:2px solid var(--border)}
+tbody th.row{position:sticky;left:0;z-index:2;background:var(--bg);text-align:left;font-weight:400;color:var(--textHeader);white-space:nowrap;padding:0 14px 0 10px;height:var(--cell);line-height:var(--cell);cursor:pointer;border-right:1px solid var(--border);max-width:360px;overflow:hidden;text-overflow:ellipsis}
+tbody th.row small{color:var(--grey600);margin-left:6px;font-size:11px}
+td.c{width:var(--cell);min-width:var(--cell);height:var(--cell);border-right:1px solid var(--bg);border-bottom:1px solid var(--bg);text-align:center;font-size:9px;line-height:var(--cell);color:#fff;cursor:crosshair}
+td.c.light{color:var(--grey900)}
+td.c.na{background:var(--na);color:var(--grey600)}
+tbody tr:hover td.c{filter:saturate(1.15) brightness(1.04)}
+tbody tr:hover th.row{background:var(--surface)}
+.m{background:var(--surface);color:var(--textHeader);font-weight:600;font-size:10px;text-align:center}
+td.m{position:sticky;right:0;z-index:1;padding:0 8px;white-space:nowrap;border-left:1px solid var(--border);min-width:52px}
+tfoot th{position:sticky;bottom:0;z-index:3;background:var(--surface);height:26px;border-top:1px solid var(--border)}
+tfoot th.rowlabel{left:0;z-index:4;text-align:left;padding:0 10px;font-weight:600;color:var(--textHeader);font-size:11px}
+thead tr.groups th{height:22px;font-size:11px;font-weight:600;color:var(--grey700);text-align:left;padding-left:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--divider);top:0}
+thead tr.cols th{top:22px}
+#tip{position:fixed;z-index:40;pointer-events:none;background:var(--textHeader);color:var(--bg);padding:10px 12px;border-radius:var(--radius);font-size:12px;line-height:1.45;max-width:340px;display:none;box-shadow:0 4px 18px rgba(0,0,0,.22)}
+#tip b{font-size:13px;display:block;margin-bottom:2px}
+#tip .big{font-size:22px;font-weight:600;margin:4px 0 2px}
+#tip .dim{opacity:.72}
+#tip .hist{display:flex;gap:2px;align-items:flex-end;height:28px;margin:6px 0 2px}
+#tip .hist i{display:block;width:22px;background:var(--bg);opacity:.85;min-height:1px}
+#tip .hl{display:flex;gap:2px;font-size:9px;opacity:.7}
+#tip .hl span{width:22px;text-align:center;overflow:hidden}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px 40px;margin-top:40px}
+.panel h2{font-size:16px;font-weight:600;color:var(--textHeader);margin:0 0 10px}
+.panel ol{margin:0;padding-left:20px}
+.panel li{margin:6px 0}
+.panel li b{color:var(--textHeader);font-weight:600}
+.panel .n{color:var(--grey600);font-size:12px}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.method{margin-top:40px;max-width:72ch;font-size:13px;border-top:1px solid var(--divider);padding-top:18px}
+.method h2{font-size:16px;font-weight:600;color:var(--textHeader);margin:0 0 8px}
+.notice{font-size:12px;color:var(--grey700);background:var(--surface);border-radius:var(--radius);padding:8px 10px;margin-top:10px;display:none}
+@media (max-width:720px){.stats{gap:16px 24px}.stat b{font-size:20px}.wrap{max-height:70vh}}
+@media (prefers-reduced-motion:no-preference){td.c{transition:filter .12s}}
+</style>
+</head>
+<body>
+<header>
+  <h1>How fully is the Met collection documented, field by field, department by department?</h1>
+  <p class="lede">Each cell is the share of a department’s objects that carry an informative value in one metadata field, surveyed across the private Hasura collection API. Blue cells are fully populated, red cells are largely empty. Hover any cell for the numbers; click a field to rank rows by it, or a row to rank fields by it. Switch the metric to see how <em>much</em> is in a field, not just whether it is filled.</p>
+  <div class="stats" id="stats"></div>
+  <div class="legend"><span id="legL">0%</span><span class="bar" aria-hidden="true"></span><span id="legR">100% of objects filled</span><span class="na" aria-hidden="true"></span><span>no data</span><span id="flagLegend"><span class="sw h" aria-hidden="true"></span><span>blanked by an import rule for that department</span><span class="sw f1" aria-hidden="true"></span><span class="sw f2" aria-hidden="true"></span><span class="sw f3" aria-hidden="true"></span><span>workbook check: wrong / outdated / incomplete — see tooltip</span></span></div>
+</header>
+<main>
+  <div class="controls" role="region" aria-label="Heatmap controls">
+    <span class="seg" role="group" aria-label="Rows">
+      <button id="rowsDept" aria-pressed="true">Departments</button>
+      <button id="rowsClass" aria-pressed="false">Classifications</button>
+      <button id="rowsArtist" aria-pressed="false">Artists</button>
+    </span>
+    <label>Metric <select id="metric">
+      <option value="fill">completeness (% filled)</option>
+      <option value="len">entry length (vs collection)</option>
+      <option value="thin">thin entries (% of filled)</option>
+    </select></label>
+    <label>Fields <select id="scope"><option value="all">all</option><option value="public">public API schema only</option><option value="private">private-only content</option><option value="flagged">flagged fields only</option><option value="unflagged">unflagged fields only</option></select></label>
+    <details class="pop" id="groupsPop"><summary id="groupsSum">Groups</summary><div class="menu" id="groupsMenu"></div></details>
+    <details class="pop" id="fieldsPop"><summary id="fieldsSum">Fields</summary><div class="menu wide" id="fieldsMenu"></div></details>
+    <details class="pop" id="deptsPop"><summary id="deptsSum">Departments</summary><div class="menu" id="deptsMenu"></div></details>
+    <label>Sort fields <select id="sortF"><option value="group">by group, then value</option><option value="fill">by overall value</option><option value="name">A–Z</option></select></label>
+    <label>Sort rows <select id="sortR"><option value="mean">by row mean</option><option value="objects">by object count</option><option value="name">A–Z</option></select></label>
+    <label><input type="search" id="find" placeholder="find a field…" aria-label="Find a field"></label>
+    <label><input type="search" id="findRow" placeholder="find a department, classification or artist…" aria-label="Find a row" style="width:300px"></label>
+    <label>Cell size <input type="range" id="size" min="14" max="40" value="22"></label>
+    <label><input type="checkbox" id="labels"> show values</label>
+    <label><input type="checkbox" id="flagsOn" checked> pipeline flags</label>
+    <label title="Cells a documented import rule blanks for that department are left out of row and column means"><input type="checkbox" id="exclBlank"> exclude blanked cells from means</label>
+    <button class="link" id="reset">Reset</button>
+  </div>
+  <p class="hint" id="hint"></p>
+  <p class="notice" id="notice"></p>
+  <div class="wrap" id="wrap"><table id="hm" aria-label="Fill rate heatmap"></table></div>
+
+  <section class="panels" id="panels"></section>
+
+  <section class="method">
+    <h2>About the numbers</h2>
+    <p id="method"></p>
+  </section>
+</main>
+<div id="tip" role="tooltip"></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const F = DATA.fields;
+const NF = F.length;
+const HAS_ART = Array.isArray(DATA.artists) && DATA.artists.length > 0;
+const HAS_LEN = !!(DATA.departments[0] && DATA.departments[0].len);
+const FLAGS = DATA.flags || {};
+const HAS_FLAGS = Object.keys(FLAGS).length > 0;
+// blanked[field] = Set of department names an import rule blanks it for
+const BLANKED = {};
+for (const [f, v] of Object.entries(FLAGS)) if (v.blanked && v.blanked.length) BLANKED[f] = new Set(v.blanked);
+function rowDept(r) { return state.rows === 'dept' ? r.name : state.rows === 'artist' ? r.dept : null; }
+function isBlanked(r, fi) { const d = rowDept(r); return !!(d && BLANKED[F[fi].name] && BLANKED[F[fi].name].has(d)); }
+// artist rows store values in artist_fields order; expand to the full field order once
+if (HAS_ART) {
+  const pos = {}; (DATA.artist_fields || []).forEach((n, i) => pos[n] = i);
+  DATA.artists.forEach(a => {
+    a.values = F.map(f => pos[f.name] === undefined ? null : a.values[pos[f.name]]);
+    a.len = a.len ? F.map(f => pos[f.name] === undefined ? null : a.len[pos[f.name]]) : null;
+  });
+}
+const GROUP_LABEL = g => g.replace('private:', '').replace(/^\w/, c => c.toUpperCase()) + (g.startsWith('private:') ? ' (private)' : '');
+const fmt = n => n.toLocaleString('en-US');
+const pct = v => v == null ? '—' : v >= 99.95 ? '100%' : v < 0.05 && v > 0 ? '<0.1%' : (v % 1 === 0 ? v : v.toFixed(1)) + '%';
+const unit = f => f.kind === 'list' ? 'items' : 'chars';
+
+// Met palette: red (empty/thin) → pale → blue (full/deep). Diverging around 50.
+function lerp(a, b, t) { return a.map((x, i) => Math.round(x + (b[i] - x) * t)); }
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const STOPS = [[0, hex('#6e182e')], [28, hex('#e4002b')], [50, hex('#f4c3cc')], [60, hex('#c8d8eb')], [85, hex('#0050bc')], [100, hex('#001e50')]];
+function color(v) {
+  v = Math.max(0, Math.min(100, v));
+  for (let i = 1; i < STOPS.length; i++) if (v <= STOPS[i][0]) {
+    const [a, ca] = STOPS[i - 1], [b, cb] = STOPS[i];
+    return lerp(ca, cb, (v - a) / (b - a));
+  }
+  return STOPS[STOPS.length - 1][1];
+}
+const isLight = v => v > 40 && v < 68;
+
+const METRICS = {
+  fill: { label: 'completeness', legL: '0%', legR: '100% of objects filled', meanLabel: 'mean fill',
+          raw: (r, fi) => r.values[fi], score: (v) => v, show: v => pct(v), meanShow: v => pct(v) },
+  len:  { label: 'entry length', legL: 'empty / far shorter than typical', legR: '2× the collection-wide mean or longer', meanLabel: 'mean rel. length',
+          raw: (r, fi) => r.len && r.len[fi] ? r.len[fi][0] : null,
+          score: (v, fi) => F[fi].len_mean ? 50 * v / F[fi].len_mean : null,
+          show: (v, fi) => v == null ? '—' : `${v} ${unit(F[fi])} (${(v / F[fi].len_mean).toFixed(2)}× collection)`,
+          meanShow: v => v == null ? '—' : (v / 50).toFixed(2) + '×' },
+  thin: { label: 'thin entries', legL: 'all filled entries are thin', legR: 'no thin entries', meanLabel: 'mean thin share',
+          raw: (r, fi) => r.len && r.len[fi] ? r.len[fi][1] : null,
+          score: v => 100 - v, show: v => v == null ? '—' : pct(v) + ' thin', meanShow: v => v == null ? '—' : pct(100 - v) + ' thin' },
+};
+
+const defaults = () => ({ rows: 'dept', metric: 'fill', scope: 'all', flags: true, exclBlank: false, groups: new Set(F.map(f => f.group)), fieldsOn: new Set(F.map(f => f.name)),
+  depts: new Set(DATA.departments.map(d => d.name)), sortF: 'group', sortR: 'mean', sortFieldIdx: null, sortRowIdx: null, find: '', findRow: '', labels: false });
+let state = defaults();
+const $ = id => document.getElementById(id);
+const M = () => METRICS[state.metric];
+
+function rowSet() { return state.rows === 'dept' ? DATA.departments : state.rows === 'class' ? DATA.classifications : DATA.artists; }
+function cellScore(r, fi) {
+  if (state.exclBlank && isBlanked(r, fi)) return null;
+  const v = M().raw(r, fi);
+  if (v == null) return null;
+  const s = M().score(v, fi);
+  return s == null ? null : s;
+}
+
+function visibleFields() {
+  let idx = F.map((f, i) => i).filter(i => {
+    const f = F[i];
+    if (state.scope === 'public' && f.private) return false;
+    if (state.scope === 'private' && !f.private) return false;
+    if (state.scope === 'flagged' && !FLAGS[f.name]) return false;
+    if (state.scope === 'unflagged' && FLAGS[f.name]) return false;
+    if (!state.groups.has(f.group)) return false;
+    if (!state.fieldsOn.has(f.name)) return false;
+    if (state.find && !f.name.toLowerCase().includes(state.find)) return false;
+    if (state.metric !== 'fill' && f.kind === 'num') return false;   // numbers have no length
+    return true;
+  });
+  const rows = rowSet();
+  if (state.sortRowIdx !== null && rows[state.sortRowIdx]) {
+    const r = rows[state.sortRowIdx];
+    idx.sort((a, b) => (cellScore(r, b) ?? -1) - (cellScore(r, a) ?? -1));
+  } else if (state.sortF === 'fill') idx.sort((a, b) => overall(b) - overall(a));
+  else if (state.sortF === 'name') idx.sort((a, b) => F[a].name.localeCompare(F[b].name));
+  else idx.sort((a, b) => F[a].group.localeCompare(F[b].group) || overall(b) - overall(a));
+  return idx;
+}
+function overall(fi) { const f = F[fi]; return state.metric === 'thin' ? 100 - (f.thin ?? 100) : f.fill; }
+
+function visibleRows(fidx) {
+  const rows = rowSet();
+  let idx = rows.map((r, i) => i).filter(i => {
+    const r = rows[i];
+    if (state.rows === 'dept' && !state.depts.has(r.name)) return false;
+    if (state.rows === 'artist' && !state.depts.has(r.dept)) return false;
+    if (state.findRow && !r.name.toLowerCase().includes(state.findRow)) return false;
+    return true;
+  });
+  const means = rows.map(r => { let s = 0, n = 0; fidx.forEach(i => { const v = cellScore(r, i); if (v != null) { s += v; n++; } }); return n ? s / n : null; });
+  if (state.sortFieldIdx !== null && !fidx.includes(state.sortFieldIdx)) state.sortFieldIdx = null;
+  if (state.sortFieldIdx !== null) idx.sort((a, b) => (cellScore(rows[b], state.sortFieldIdx) ?? -1) - (cellScore(rows[a], state.sortFieldIdx) ?? -1));
+  else if (state.sortR === 'objects') idx.sort((a, b) => rows[b].objects - rows[a].objects);
+  else if (state.sortR === 'name') idx.sort((a, b) => rows[a].name.localeCompare(rows[b].name));
+  else idx.sort((a, b) => (means[b] ?? -1) - (means[a] ?? -1));
+  return { idx, means };
+}
+
+function render() {
+  const rows = rowSet();
+  const fidx = visibleFields();
+  const { idx: ridx, means } = visibleRows(fidx);
+  const colMeans = fidx.map(i => { let s = 0, n = 0; ridx.forEach(r => { const v = cellScore(rows[r], i); if (v != null) { s += v; n++; } }); return n ? s / n : null; });
+  const cellPx = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'));
+  const t = $('hm');
+  let h = '<thead><tr class="groups"><th class="corner"></th>';
+  let i = 0;
+  while (i < fidx.length) {
+    const g = F[fidx[i]].group; let j = i;
+    while (j < fidx.length && F[fidx[j]].group === g) j++;
+    h += `<th class="gstart" colspan="${j - i}" style="max-width:${(j - i) * cellPx}px" title="${GROUP_LABEL(g)}">${j - i > 2 ? GROUP_LABEL(g) : ''}</th>`;
+    i = j;
+  }
+  h += '<th></th></tr><tr class="cols"><th class="corner"></th>';
+  fidx.forEach((fi, k) => {
+    const f = F[fi];
+    const gs = k === 0 || F[fidx[k - 1]].group !== f.group ? ' gstart' : '';
+    h += `<th class="col${f.private ? ' private' : ''}${state.sortFieldIdx === fi ? ' sorted' : ''}${gs}" data-f="${fi}" tabindex="0" role="columnheader" aria-sort="${state.sortFieldIdx === fi ? 'descending' : 'none'}"><span class="rot">${f.name}</span><span class="fl ${FLAGS[f.name] && FLAGS[f.name].level !== 'none' ? FLAGS[f.name].level : ''}" title="${FLAGS[f.name] ? 'Tombstone workbook check: ' + FLAGS[f.name].summary : ''}"></span></th>`;
+  });
+  h += `<th class="m">${M().meanLabel}</th></tr></thead><tbody>`;
+  ridx.forEach(ri => {
+    const r = rows[ri];
+    h += `<tr><th class="row${state.sortRowIdx === ri ? ' sorted' : ''}" data-r="${ri}" tabindex="0" scope="row" title="${r.name}${r.dept ? ' · ' + r.dept : ''}">${r.name}<small>${fmt(r.objects)}</small></th>`;
+    fidx.forEach((fi, k) => {
+      const gs = k === 0 || F[fidx[k - 1]].group !== F[fi].group ? ' gstart' : '';
+      const s = cellScore(r, fi);
+      const hb = isBlanked(r, fi) ? ' hatch' : '';
+      if (s == null) h += `<td class="c na${gs}${hb}" data-r="${ri}" data-f="${fi}"></td>`;
+      else { const c = color(s); const raw = M().raw(r, fi); h += `<td class="c${isLight(s) ? ' light' : ''}${gs}${hb}" data-r="${ri}" data-f="${fi}" style="background-color:rgb(${c})">${state.labels ? Math.round(raw) : ''}</td>`; }
+    });
+    h += `<td class="m">${M().meanShow(means[ri])}</td></tr>`;
+  });
+  h += '</tbody><tfoot><tr><th class="rowlabel">mean across rows</th>';
+  colMeans.forEach((m, k) => {
+    const gs = k === 0 || F[fidx[k - 1]].group !== F[fidx[k]].group ? ' gstart' : '';
+    h += `<th class="m${gs}" title="${F[fidx[k]].name}: ${M().meanShow(m)} across ${ridx.length} rows">${m == null ? '' : state.metric === 'len' ? (m / 50).toFixed(1) : Math.round(m)}</th>`;
+  });
+  h += '<th class="m"></th></tr></tfoot>';
+  t.innerHTML = h;
+
+  const what = state.rows === 'dept' ? `${ridx.length} of ${DATA.departments.length} departments`
+    : state.rows === 'class' ? `${ridx.length} classifications (the largest by object count, of ${fmt(DATA.n_class_total)})`
+    : `${ridx.length} artists (the ${fmt(DATA.artists.length)} with most objects, of ${fmt(DATA.n_artists_total || DATA.artists.length)} named)`;
+  let note = '';
+  if (state.sortFieldIdx !== null) note = ` Rows ranked by <b>${F[state.sortFieldIdx].name}</b>.`;
+  if (state.sortRowIdx !== null) note += ` Fields ranked by <b>${rows[state.sortRowIdx].name}</b>.`;
+  const gOff = NF - fidx.length;
+  $('hint').innerHTML = `${what} × ${fidx.length} fields, metric: <b>${M().label}</b>. Row mean is taken over the fields currently shown${state.fieldsOn.size < NF ? ` (${NF - state.fieldsOn.size} fields unticked)` : ''}${state.groups.size < new Set(F.map(f => f.group)).size ? ` (${new Set(F.map(f => f.group)).size - state.groups.size} groups excluded)` : ''}; the column mean is unweighted across rows.${note}`;
+  $('legL').textContent = M().legL; $('legR').textContent = M().legR;
+  $('groupsSum').textContent = `Groups (${state.groups.size}/${new Set(F.map(f => f.group)).size})`;
+  $('fieldsSum').textContent = `Fields (${state.fieldsOn.size}/${NF})`;
+  $('deptsSum').textContent = `Departments (${state.depts.size}/${DATA.departments.length})`;
+  $('deptsPop').style.opacity = state.rows === 'class' ? .45 : 1;
+  renderPanels(fidx, ridx, means, colMeans);
+}
+
+function renderPanels(fidx, ridx, means, colMeans) {
+  const rows = rowSet();
+  const kind = state.rows === 'dept' ? 'departments' : state.rows === 'class' ? 'classifications' : 'artists';
+  const byMean = ridx.filter(i => means[i] != null).sort((a, b) => means[a] - means[b]);
+  const byCol = fidx.map((fi, k) => [fi, colMeans[k]]).filter(x => x[1] != null).sort((a, b) => a[1] - b[1]);
+  const li = (name, s, val, sub) => `<li><span class="swatch" style="background:rgb(${color(s)})"></span><b>${name}</b> ${val}${sub ? ` <span class="n">${sub}</span>` : ''}</li>`;
+  const rsub = r => `${fmt(r.objects)} objects${r.over90 != null ? ` · ${r.over90} fields ≥90% · ${r.under10} fields <10%` : ''}${r.dept ? ' · ' + r.dept : ''}`;
+  const fsub = f => `${GROUP_LABEL(f.group)}${f.len_mean ? ` · typical entry ${f.len_mean} ${unit(f)}, ${pct(f.thin)} thin` : ''}`;
+  const low = { fill: 'Least documented', len: 'Shortest entries', thin: 'Thinnest entries' }[state.metric];
+  const high = { fill: 'Most documented', len: 'Longest entries', thin: 'Fullest entries' }[state.metric];
+  const n = state.rows === 'dept' ? 3 : 5;
+  $('panels').innerHTML = `
+    <div class="panel"><h2>${low} ${kind}</h2><ol>${byMean.slice(0, n).map(i => li(rows[i].name, means[i], M().meanShow(means[i]), rsub(rows[i]))).join('')}</ol></div>
+    <div class="panel"><h2>${high} ${kind}</h2><ol>${byMean.slice(-n).reverse().map(i => li(rows[i].name, means[i], M().meanShow(means[i]), rsub(rows[i]))).join('')}</ol></div>
+    <div class="panel"><h2>${low} fields</h2><ol>${byCol.slice(0, 6).map(([fi, m]) => li(F[fi].name, m, M().meanShow(m), fsub(F[fi]))).join('')}</ol></div>
+    <div class="panel"><h2>${high} fields</h2><ol>${byCol.slice(-6).reverse().map(([fi, m]) => li(F[fi].name, m, M().meanShow(m), fsub(F[fi]))).join('')}</ol></div>` +
+    (HAS_FLAGS && state.flags ? `<div class="panel"><h2>Tombstone workbook check: fields shown</h2><ol>${fidx.filter(fi => FLAGS[F[fi].name] && FLAGS[F[fi].name].level !== 'none').sort((a, b) => ({high: 0, medium: 1, low: 2})[FLAGS[F[a].name].level] - ({high: 0, medium: 1, low: 2})[FLAGS[F[b].name].level]).slice(0, 10).map(fi => { const fl = FLAGS[F[fi].name]; return `<li><span class="swatch" style="background:${fl.level === 'high' ? 'var(--metRed)' : fl.level === 'medium' ? '#d98e04' : 'var(--grey600)'}"></span><b>${F[fi].name}</b> <span class="rule">row “${fl.row}”</span><br><span class="n">${fl.summary}</span></li>`; }).join('')}</ol></div>` : '');
+}
+
+// tooltip
+const tip = $('tip');
+function bucketLabels(f) {
+  const e = f.kind === 'list' ? DATA.buckets.list : DATA.buckets.str;
+  return [`≤${e[0]}`].concat(e.slice(1).map((x, i) => `${e[i] + 1}–${x}`), [`>${e[e.length - 1]}`]);
+}
+function showTip(td, ev) {
+  const rows = rowSet(), r = rows[+td.dataset.r], fi = +td.dataset.f, f = F[fi];
+  const fill = r.values[fi];
+  const all = rows.map(x => cellScore(x, fi)).filter(v => v != null).sort((a, b) => b - a);
+  const s = cellScore(r, fi); const rank = s == null ? null : all.indexOf(s) + 1;
+  const kindName = state.rows === 'dept' ? 'departments' : state.rows === 'class' ? 'classifications shown' : 'artists shown';
+  let body = `<b>${f.name}</b><span class="dim">${GROUP_LABEL(f.group)}${f.documented ? '' : ' · not in the public API'}</span>`;
+  body += `<div class="big">${M().show(M().raw(r, fi), fi)}</div>`;
+  body += `<div>${state.metric === 'fill' ? 'of' : 'across'} ${fmt(Math.round(r.objects * (state.metric === 'fill' ? 1 : (fill ?? 0) / 100)))} ${state.metric === 'fill' ? 'objects' : 'filled objects'} ${state.rows === 'artist' ? 'by' : 'in'} <b style="display:inline">${r.name}</b>${r.depts ? `<div class="dim">${r.depts}</div>` : ''}</div>`;
+  if (state.metric !== 'fill') body += `<div class="dim">fill ${pct(fill)} · collection-wide mean ${f.len_mean} ${unit(f)}, ${pct(f.thin)} thin</div>`;
+  else { const d = fill == null ? null : fill - f.fill; body += `<div class="dim">${rank ? `rank ${rank} of ${all.length} ${kindName} · ` : ''}collection-wide ${pct(f.fill)}${d == null ? '' : ` (${d >= 0 ? '+' : ''}${d.toFixed(1)} pts)`}</div>`; }
+  const L = r.len && r.len[fi];
+  if (L && L.length > 2) {
+    const b = L.slice(2), mx = Math.max(...b, 1), labs = bucketLabels(f);
+    body += `<div class="dim" style="margin-top:6px">entry length, ${fmt(b.reduce((a, c) => a + c, 0))} filled: mean ${L[0]} ${unit(f)}, ${pct(L[1])} thin</div>`;
+    body += `<div class="hist">${b.map(c => `<i style="height:${Math.max(1, 28 * c / mx)}px"></i>`).join('')}</div><div class="hl">${labs.map(l => `<span>${l}</span>`).join('')}</div>`;
+  } else if (L) body += `<div class="dim" style="margin-top:4px">entry length: mean ${L[0]} ${unit(f)}, ${pct(L[1])} thin</div>`;
+  if (state.metric === 'fill' && f.top && !f.top.startsWith('nan')) body += `<div class="dim" style="margin-top:6px">common values: ${f.top.replace(/ \(\d+\)/g, '').split(';').slice(0, 4).join(';')}</div>`;
+  const fl = FLAGS[f.name];
+  if (fl && state.flags) {
+    const d = rowDept(r);
+    const cells = d ? fl.cells.filter(c => c.dept === d) : [];
+    const c = cells[0];
+    body += `<div class="flags"><b>Tombstone workbook check · row “${fl.row}”${c ? ' · ' + c.verdict : ''}</b>`;
+    if (c) {
+      if (c.blanked) body += `<div><b style="display:inline">Blanked by the import for this department.</b></div>`;
+      else if (c.display_only) body += `<div><b style="display:inline">Published by CRD but not shown on the object page.</b></div>`;
+      body += `<div><span class="st">Workbook says:</span> ${c.workbook || '(blank cell)'}</div><div><span class="st">True today:</span> ${c.today}</div>`;
+    } else body += `<div>${fl.summary}</div>`;
+    body += '</div>';
+  }
+  tip.innerHTML = body; tip.style.display = 'block'; moveTip(ev);
+}
+function moveTip(ev) {
+  const x = ev.clientX + 14, y = ev.clientY + 14, w = tip.offsetWidth, hgt = tip.offsetHeight;
+  tip.style.left = (x + w > innerWidth - 8 ? ev.clientX - w - 10 : x) + 'px';
+  tip.style.top = (y + hgt > innerHeight - 8 ? ev.clientY - hgt - 10 : y) + 'px';
+}
+const hm = $('hm');
+hm.addEventListener('mouseover', e => { const td = e.target.closest('td.c'); if (td) showTip(td, e); });
+hm.addEventListener('mousemove', e => { if (tip.style.display === 'block') moveTip(e); });
+hm.addEventListener('mouseleave', () => tip.style.display = 'none');
+hm.addEventListener('click', e => {
+  const th = e.target.closest('th.col'); const rh = e.target.closest('th.row');
+  if (th) { const fi = +th.dataset.f; state.sortFieldIdx = state.sortFieldIdx === fi ? null : fi; render(); }
+  else if (rh) { const ri = +rh.dataset.r; state.sortRowIdx = state.sortRowIdx === ri ? null : ri; render(); }
+});
+hm.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('th.col,th.row')) { e.preventDefault(); e.target.click(); } });
+
+// popover menus (groups, departments)
+function buildMenu(menu, items, set, labelOf, countOf, cls) {
+  menu.innerHTML = `<div class="quick"><button class="link" data-q="all">all</button><button class="link" data-q="none">none</button><button class="link" data-q="invert">invert</button></div>` +
+    items.map(it => `<label class="${cls ? cls(it) : ''}"><input type="checkbox" value="${it}" ${set.has(it) ? 'checked' : ''}> ${labelOf(it)}<small>${countOf(it)}</small></label>`).join('');
+  menu.onchange = e => { if (e.target.type === 'checkbox') { e.target.checked ? set.add(e.target.value) : set.delete(e.target.value); state.sortRowIdx = null; render(); } };
+  menu.onclick = e => {
+    const q = e.target.dataset.q; if (!q) return;
+    items.forEach(it => { if (q === 'all') set.add(it); else if (q === 'none') set.delete(it); else set.has(it) ? set.delete(it) : set.add(it); });
+    menu.querySelectorAll('input').forEach(cb => cb.checked = set.has(cb.value)); render();
+  };
+}
+const GROUPS = [...new Set(F.map(f => f.group))].sort();
+function buildFieldsMenu() {
+  const menu = $('fieldsMenu');
+  menu.innerHTML = `<input type="search" placeholder="filter this list…" aria-label="Filter field list">` +
+    `<div class="quick"><button class="link" data-q="all">all</button><button class="link" data-q="none">none</button><button class="link" data-q="invert">invert</button><button class="link" data-q="shown">only those listed</button></div>` +
+    GROUPS.map(g => `<div class="gh" data-g="${g}">${GROUP_LABEL(g)}</div>` +
+      F.filter(f => f.group === g).map(f => `<label class="${f.private ? 'priv' : ''}" data-n="${f.name.toLowerCase()}"><input type="checkbox" value="${f.name}" ${state.fieldsOn.has(f.name) ? 'checked' : ''}> ${f.name}<small>${pct(f.fill)}</small></label>`).join('')).join('');
+  const listed = () => [...menu.querySelectorAll('label')].filter(l => l.style.display !== 'none').map(l => l.querySelector('input'));
+  menu.querySelector('input[type=search]').oninput = e => {
+    const q = e.target.value.trim().toLowerCase();
+    menu.querySelectorAll('label').forEach(l => l.style.display = !q || l.dataset.n.includes(q) ? '' : 'none');
+    menu.querySelectorAll('.gh').forEach(h => { h.style.display = !q || F.some(f => f.group === h.dataset.g && f.name.toLowerCase().includes(q)) ? '' : 'none'; });
+  };
+  menu.onchange = e => { if (e.target.type === 'checkbox') { e.target.checked ? state.fieldsOn.add(e.target.value) : state.fieldsOn.delete(e.target.value); state.sortFieldIdx = null; render(); } };
+  menu.onclick = e => {
+    const q = e.target.dataset.q; if (!q) return;
+    const cbs = listed();
+    if (q === 'shown') { state.fieldsOn.clear(); cbs.forEach(cb => state.fieldsOn.add(cb.value)); }
+    else cbs.forEach(cb => { if (q === 'all') state.fieldsOn.add(cb.value); else if (q === 'none') state.fieldsOn.delete(cb.value); else state.fieldsOn.has(cb.value) ? state.fieldsOn.delete(cb.value) : state.fieldsOn.add(cb.value); });
+    menu.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = state.fieldsOn.has(cb.value)); state.sortFieldIdx = null; render();
+  };
+}
+function buildMenus() {
+  buildFieldsMenu();
+  buildMenu($('groupsMenu'), GROUPS, state.groups, GROUP_LABEL, g => `${F.filter(f => f.group === g).length} fields`, g => g.startsWith('private:') ? 'priv' : '');
+  buildMenu($('deptsMenu'), DATA.departments.map(d => d.name), state.depts, d => d, d => fmt(DATA.departments.find(x => x.name === d).objects));
+}
+document.addEventListener('click', e => { document.querySelectorAll('details.pop[open]').forEach(d => { if (!d.contains(e.target)) d.removeAttribute('open'); }); });
+
+// controls
+$('rowsDept').onclick = () => setRows('dept'); $('rowsClass').onclick = () => setRows('class'); $('rowsArtist').onclick = () => setRows('artist');
+function setRows(r) {
+  state.rows = r; state.sortFieldIdx = state.sortRowIdx = null;
+  ['dept', 'class', 'artist'].forEach(k => $('rows' + k[0].toUpperCase() + k.slice(1)).setAttribute('aria-pressed', state.rows === k));
+  $('findRow').placeholder = r === 'artist' ? 'find an artist, e.g. van Gogh…' : r === 'class' ? 'find a classification…' : 'find a department…';
+  render();
+}
+$('metric').onchange = e => { state.metric = e.target.value; render(); };
+$('scope').onchange = e => { state.scope = e.target.value; render(); };
+$('sortF').onchange = e => { state.sortF = e.target.value; state.sortRowIdx = null; render(); };
+$('sortR').onchange = e => { state.sortR = e.target.value; state.sortFieldIdx = null; render(); };
+$('find').oninput = e => { state.find = e.target.value.trim().toLowerCase(); render(); };
+$('findRow').oninput = e => { state.findRow = e.target.value.trim().toLowerCase(); render(); };
+$('size').oninput = e => { document.documentElement.style.setProperty('--cell', e.target.value + 'px'); render(); };
+$('labels').onchange = e => { state.labels = e.target.checked; render(); };
+$('flagsOn').onchange = e => { state.flags = e.target.checked; document.body.classList.toggle('noflags', !state.flags); render(); };
+$('exclBlank').onchange = e => { state.exclBlank = e.target.checked; render(); };
+$('reset').onclick = () => { state = defaults(); $('metric').value = 'fill'; $('scope').value = 'all'; $('sortF').value = 'group'; $('sortR').value = 'mean'; $('find').value = ''; $('findRow').value = ''; $('labels').checked = false; $('flagsOn').checked = true; $('exclBlank').checked = false; document.body.classList.remove('noflags'); $('size').value = 22; document.documentElement.style.setProperty('--cell', '22px'); buildMenus(); setRows('dept'); };
+
+// feature availability
+if (!HAS_FLAGS) { $('flagsOn').disabled = true; $('exclBlank').disabled = true; $('flagLegend').style.display = 'none'; }
+if (!HAS_ART) { $('rowsArtist').disabled = true; $('rowsArtist').title = 'Artist breakdown not in this survey run'; }
+if (!HAS_LEN) { $('metric').disabled = true; $('metric').title = 'Entry-length statistics not in this survey run'; }
+
+// populate static bits
+const nPub = F.filter(f => !f.private).length, nPriv = F.length - nPub;
+const dAll = DATA.departments; const overallFill = dAll.reduce((s, d) => s + d.mean * d.objects, 0) / DATA.total;
+$('stats').innerHTML = [[fmt(DATA.total), 'objects surveyed'], [dAll.length, 'curatorial departments'], [F.length, 'metadata fields scored'], [`${nPub} + ${nPriv}`, 'public-API fields + private-only fields'], [pct(overallFill), 'object-weighted mean fill'], HAS_ART ? [fmt(DATA.n_artists_total || DATA.artists.length), 'named artists'] : null].filter(Boolean).map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+$('method').textContent = `A field counts as filled when the object carries an informative value: nulls, empty strings and lists, numeric zeros in date fields, placeholder strings such as “unknown” or “n/a”, and keys absent from the record all count as unfilled. Identifiers, flags and housekeeping columns (objectID, department, metadataDate, on-view state, collection membership and the like) are left out of the scoring. Fields marked “private” exist only in the Hasura schema and are not part of the public Collection API contract, so their fill rates describe internal cataloguing rather than what the public can see. Entry length is measured in characters for text fields and in items for list fields (tags, constituents, images); an entry is “thin” when it is 30 characters or fewer, or a single item. The length metric colours each cell by its mean entry length relative to the collection-wide mean for that field, so a short field such as culture and a long one such as provenance are each judged on their own scale. Artists are grouped by display name (artistDisplayName) and assigned to the department holding most of their objects; the department filter applies to artists through that department. Records were pulled from objects_crd with the apiObject relationship; public-API field names follow the private-API guide’s field comparison table. Flags come from one page of the Met's internal Collection Online documentation, the cell-by-cell check of Collection Information's CRD Tombstone workbook (29 October 2026): a hatched cell is a field the nightly import blanks for that department, so its emptiness is a publishing decision rather than a cataloguing gap; the marker above a field name carries the workbook audit's verdict for that field in at least one department, red where the workbook's description is wrong, amber where it is outdated, grey where it is incomplete, and the tooltip shows what the workbook says against what is true today for the department under the cursor. Fields the workbook does not describe carry no flag. Row means are unweighted across the fields shown; with “exclude blanked cells from means” on, hatched cells are left out so departments are judged only on fields the pipeline lets them have.${DATA.generated ? ` Survey run: ${DATA.generated}.` : ''}`;
+buildMenus();
+setRows('dept');
+</script>
+</body>
+</html>
