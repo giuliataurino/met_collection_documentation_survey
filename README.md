@@ -1,6 +1,6 @@
 # Met collection documentation survey
 
-An interactive overview of how fully The Met's collection is documented, field by field and department by department, built from a survey of 546,856 objects across 19 curatorial departments and 84 scored metadata fields via the Met's private Hasura collection API.
+An interactive overview of how fully The Met's collection is documented, field by field and department by department, built from a survey of 546,856 objects across 19 curatorial departments and 84 scored metadata fields via The Met API.
 
 **Live page:** https://giuliataurino.github.io/met_collection_documentation_survey/
 
@@ -16,7 +16,7 @@ An interactive overview of how fully The Met's collection is documented, field b
 
 ## How to read it
 
-A field counts as filled when the object carries an informative value; nulls, empty strings and lists, numeric zeros in date fields, placeholder strings and absent keys all count as unfilled. Identifiers, flags and housekeeping columns are not scored. Fields marked *private* exist only in the Hasura schema, not in the public Collection API, so their fill rates describe internal cataloguing rather than what the public can see.
+A field counts as filled when the object carries an informative value; nulls, empty strings and lists, numeric zeros in date fields, placeholder strings and absent keys all count as unfilled. Identifiers, flags and housekeeping columns are not scored.
 
 Related: [met-harvester-diagnostics](https://github.com/giuliataurino/met-harvester-diagnostics) and [met-harvester-diagnostics-visualizations](https://github.com/giuliataurino/met-harvester-diagnostics-visualizations), which run the equivalent survey against the public Collection API.
 
