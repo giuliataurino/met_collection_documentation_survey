@@ -1,7 +1,0 @@
-{"data": {"objects": [
-  {"object_id": 900001, "accession_number": "TEST.1", "title": "Terracotta volute-krater (bowl for mixing wine and water)", "object_name": "Volute-krater", "culture": "Greek, Attic", "period": "Classical", "object_date": "ca. 450 BCE", "object_begin_date": -460, "object_end_date": -440, "medium": "Terracotta; red-figure", "classification": "Vases", "department": "Greek and Roman Art", "primary_image_small": "", "tags": [{"term": "Amazons"}]},
-  {"object_id": 900002, "accession_number": "TEST.2", "title": "Terracotta rim fragment of a kylix (drinking cup)", "object_name": "Kylix fragment", "culture": "Greek, Attic", "medium": "Terracotta; red-figure", "classification": "Vases", "department": "Greek and Roman Art"},
-  {"object_id": 900003, "accession_number": "TEST.3", "title": "Terracotta hydria (water jar)", "object_name": "Hydria", "culture": "Greek, South Italian, Apulian", "classification": "Vases", "department": "Greek and Roman Art"},
-  {"object_id": 900004, "accession_number": "TEST.4", "title": "Marble head of a youth", "object_name": "Head", "classification": "Stone Sculpture", "department": "Greek and Roman Art"},
-  {"object_id": 900005, "accession_number": "TEST.5", "title": "Terracotta fragment", "object_name": "Fragment", "medium": "Terracotta", "classification": "Vases", "department": "Greek and Roman Art"}
-]}}
