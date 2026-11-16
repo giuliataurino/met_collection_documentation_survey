@@ -1,2 +1,0 @@
-# Optional: adds the CLIP measure to stage 3. Large download (PyTorch and model weights).
-sentence-transformers>=3.0
